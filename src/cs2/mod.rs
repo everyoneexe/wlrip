@@ -60,6 +60,8 @@ pub struct CS2 {
     weapon: Weapon,
     planted_c4: Option<PlantedC4>,
     last_cache: Instant,
+    /// When true, the overlay is hidden entirely (panic / stream-proof).
+    streamproof: bool,
 }
 
 impl CS2 {
@@ -119,6 +121,14 @@ impl CS2 {
         self.fov_changer(config);
 
         self.esp_toggle(config);
+
+        // Stream-proof / panic: a single toggle hides the whole overlay so it
+        // does not show up when sharing the full screen.
+        if config.misc.streamproof_hotkey != KeyCode::None
+            && self.input.key_just_pressed(config.misc.streamproof_hotkey)
+        {
+            self.streamproof = !self.streamproof;
+        }
 
         self.triggerbot(config);
 
@@ -270,6 +280,7 @@ impl CS2 {
             false
         };
         data.esp_active = self.esp_enabled(config);
+        data.overlay_hidden = self.streamproof;
 
         data.view_matrix = self.process.read::<Mat4>(self.offsets.direct.view_matrix);
         data.view_angles = local_player.view_angles(self);
@@ -309,6 +320,7 @@ impl CS2 {
             weapon: Weapon::default(),
             planted_c4: None,
             last_cache: Instant::now(),
+            streamproof: false,
         }
     }
 

@@ -71,6 +71,11 @@ impl OverlayRenderer {
         self.update_player_sounds();
         let data = &self.data.lock();
 
+        // Stream-proof / panic toggle: render nothing at all.
+        if data.overlay_hidden {
+            return;
+        }
+
         self.overlay_debug(&painter, data);
 
         for player in &data.players {

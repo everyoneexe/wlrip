@@ -2,7 +2,7 @@ use egui::{DragValue, Ui};
 
 use crate::ui::{
     app::App,
-    gui::helpers::{collapsing_open, color_picker},
+    gui::helpers::{collapsing_open, color_picker, keybind},
 };
 
 impl App {
@@ -23,6 +23,22 @@ impl App {
                 .show(right, |right| {
                     self.unsafe_right(right);
                 });
+        });
+
+        collapsing_open(ui, "Stream Proof", |ui| {
+            ui.label(
+                "Toggle key hides the entire overlay. Use it before sharing your \
+                 full screen — when sharing only the game window, the overlay is \
+                 already invisible to viewers.",
+            );
+            if keybind(
+                ui,
+                "streamproof_hotkey",
+                "Hide Toggle",
+                &mut self.config.misc.streamproof_hotkey,
+            ) {
+                self.send_config();
+            }
         });
 
         collapsing_open(ui, "Smokes", |ui| {

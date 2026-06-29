@@ -34,6 +34,8 @@ pub struct Data {
     pub aimbot_active: bool,
     pub triggerbot_active: bool,
     pub esp_active: bool,
+    /// Stream-proof / panic: when true the overlay renders nothing.
+    pub overlay_hidden: bool,
 }
 
 #[derive(Debug, Clone, Default, Serialize)]

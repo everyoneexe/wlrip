@@ -1,6 +1,8 @@
 use egui::Color32;
 use serde::{Deserialize, Serialize};
 
+use crate::cs2::key_codes::KeyCode;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct UnsafeConfig {
@@ -11,6 +13,7 @@ pub struct UnsafeConfig {
     pub no_smoke: bool,
     pub change_smoke_color: bool,
     pub smoke_color: Color32,
+    pub streamproof_hotkey: KeyCode,
 }
 
 impl Default for UnsafeConfig {
@@ -23,6 +26,7 @@ impl Default for UnsafeConfig {
             no_smoke: false,
             change_smoke_color: false,
             smoke_color: Color32::RED,
+            streamproof_hotkey: KeyCode::None,
         }
     }
 }
