@@ -128,6 +128,7 @@ Running NixOS or Fedora Atomic? See [OS-Specific Setup](os-setup.md).
 - Visibility check (VPK parsing)
 - Autowall (thickness-based penetration check)
 - Multipoint head aiming (aims at the visible part of a peeking head)
+- Aim jitter (randomizes the aim point to soften the lock)
 - Head only/whole body
 - Flash check
 - FOV circle
@@ -150,6 +151,7 @@ Running NixOS or Fedora Atomic? See [OS-Specific Setup](os-setup.md).
 - Activation mode
 - Min/max delay
 - Additional Duration
+- Refire delay (randomized cooldown after each shot)
 - Visibility check
 - Flash check
 - Scope check
@@ -170,6 +172,9 @@ Running NixOS or Fedora Atomic? See [OS-Specific Setup](os-setup.md).
 
 - Sniper crosshair
 - Bomb timer
+- Bomb ESP (C4 location, time-colored, with a defuse race indicator)
+- Shot log (headshot ratio and a best-effort risk indicator)
+- Stream-proof panic key (hotkey that instantly hides the whole overlay)
 
 ### Unsafe
 
