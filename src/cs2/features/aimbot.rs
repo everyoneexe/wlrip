@@ -18,6 +18,14 @@ pub struct Aimbot {
     inertia: Vec2,
 }
 
+impl Aimbot {
+    /// Drop any accumulated motion. Called on ticks where the aimbot applies no
+    /// movement so a stale vector from a previous engagement is never replayed.
+    pub fn reset_inertia(&mut self) {
+        self.inertia = Vec2::ZERO;
+    }
+}
+
 impl CS2 {
     pub fn aimbot(&mut self, config: &Config, mouse: &mut Mouse) -> bool {
         let hotkey = config.aim.aimbot_hotkey;

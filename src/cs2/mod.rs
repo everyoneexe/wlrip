@@ -146,6 +146,11 @@ impl CS2 {
         self.find_target(config);
 
         if !self.aimbot(config, mouse) {
+            // The aimbot did not apply any movement this tick (no target, out of
+            // FOV, flashed, etc.). Clear the inertia accumulator so a leftover
+            // motion vector from a previous engagement can't be replayed when the
+            // next target enters the FOV, which would flick the view away.
+            self.aim.reset_inertia();
             self.rcs(config, mouse);
         }
     }
@@ -306,6 +311,7 @@ impl CS2 {
         }
     }
 
+    #[cfg(feature = "lagdbg")]
     pub fn player_count(&self) -> usize {
         self.players.len()
     }
