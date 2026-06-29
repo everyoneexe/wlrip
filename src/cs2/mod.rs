@@ -91,7 +91,7 @@ impl CS2 {
         self.is_valid = true;
     }
 
-    pub fn run(&mut self, config: &Config, mouse: &mut Mouse) {
+    pub fn run(&mut self, config: &Config, mouse: Option<&mut Mouse>) {
         if !self.process.is_valid() {
             self.is_valid = false;
             utils::debug!("process is no longer valid");
@@ -134,6 +134,12 @@ impl CS2 {
         }
 
         self.triggerbot(config);
+
+        // Mouse-driven features (triggerbot fire, aimbot, rcs) need a uinput
+        // device. Without one we still run ESP and all read-only features.
+        let Some(mouse) = mouse else {
+            return;
+        };
 
         self.triggerbot_shoot(mouse);
 

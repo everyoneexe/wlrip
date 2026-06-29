@@ -38,8 +38,11 @@ fn main() {
     )
     .expect("failed to initialize logger");
 
+    // uinput is only needed for mouse-driven features (aimbot, triggerbot,
+    // rcs). If it's unavailable we still run in ESP-only mode, so just warn
+    // instead of bailing out.
     if !check_uinput() {
-        return;
+        utils::error!("uinput unavailable: running in ESP-only mode (no aimbot/triggerbot/rcs).");
     }
 
     // the layer-shell overlay needs the wayland display to connect on its own

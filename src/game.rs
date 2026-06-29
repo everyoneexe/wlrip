@@ -18,7 +18,7 @@ pub struct GameManager {
     channel: Channel<UiMessage, GameMessage>,
     data: Arc<Mutex<Data>>,
     config: Config,
-    mouse: Mouse,
+    mouse: Option<Mouse>,
     cs2: CS2,
     // TEMP: lag instrumentation
     timing_samples: u32,
@@ -30,11 +30,12 @@ pub struct GameManager {
 impl GameManager {
     pub fn new(channel: Channel<UiMessage, GameMessage>, data: Arc<Mutex<Data>>) -> Self {
         let mouse = match Mouse::open() {
-            Ok(mouse) => mouse,
+            Ok(mouse) => Some(mouse),
             Err(err) => {
                 utils::error!("error creating uinput device: {err}");
                 utils::error!("uinput kernel module is not loaded, or user is not in input group.");
-                std::process::exit(1);
+                utils::error!("continuing in ESP-only mode: aimbot, triggerbot and rcs are disabled.");
+                None
             }
         };
 
@@ -81,7 +82,7 @@ impl GameManager {
                     self.send_message(UiMessage::Status(GameStatus::Working));
                     previous_status = GameStatus::Working;
                 }
-                self.cs2.run(&self.config, &mut self.mouse);
+                self.cs2.run(&self.config, self.mouse.as_mut());
                 // TEMP: measure how long the data() call holds the mutex
                 let data_start = Instant::now();
                 let mut data = self.data.lock();
