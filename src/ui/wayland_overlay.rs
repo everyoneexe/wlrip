@@ -50,11 +50,13 @@ pub struct WaylandOverlay {
     painter: egui_glow::Painter,
     width: u32,
     height: u32,
+    /// detected display refresh rate in Hz, if the compositor reported a
+    /// current mode for an output
+    refresh_hz: Option<f32>,
 }
 
 impl WaylandOverlay {
-    pub fn new(wayland_display: &str) -> Option<Self> {
-        let _ = wayland_display;
+    pub fn new(wayland_display: &str) -> Option<Self> {        let _ = wayland_display;
         let connection = Connection::connect_to_env().ok()?;
 
         let (globals, mut event_queue) = registry_queue_init(&connection).ok()?;
@@ -198,6 +200,11 @@ impl WaylandOverlay {
 
         utils::info!("wayland layer shell overlay created");
 
+        let refresh_hz = detect_refresh_hz(&state.output_state);
+        if let Some(hz) = refresh_hz {
+            utils::info!("detected display refresh rate: {:.2} Hz", hz);
+        }
+
         Some(Self {
             _connection: connection,
             event_queue,
@@ -212,7 +219,13 @@ impl WaylandOverlay {
             painter,
             width,
             height,
+            refresh_hz,
         })
+    }
+
+    /// Display refresh rate in Hz as reported by the compositor, if known.
+    pub fn refresh_hz(&self) -> Option<f32> {
+        self.refresh_hz
     }
 
     pub fn begin_frame(&mut self) -> bool {
@@ -399,4 +412,19 @@ fn prep_ctx(ctx: &egui::Context) {
         .insert(0, String::from("cs2_icons"));
 
     ctx.set_fonts(font_definitions);
+}
+
+/// Inspect the bound outputs and return the refresh rate (Hz) of the current
+/// mode. Picks the fastest current mode across all outputs so a high-refresh
+/// primary monitor isn't capped by a slower secondary one. Refresh is reported
+/// by the compositor in mHz.
+fn detect_refresh_hz(output_state: &OutputState) -> Option<f32> {
+    output_state
+        .outputs()
+        .filter_map(|output| output_state.info(&output))
+        .flat_map(|info| info.modes)
+        .filter(|mode| mode.current && mode.refresh_rate > 0)
+        .map(|mode| mode.refresh_rate)
+        .max()
+        .map(|mhz| mhz as f32 / 1000.0)
 }

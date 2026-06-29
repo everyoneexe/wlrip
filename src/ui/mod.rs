@@ -41,6 +41,10 @@ pub fn run_overlay(
 
     let mut renderer = OverlayRenderer::new(data, config, grenades);
 
+    // Rendering faster than the display refreshes just burns GPU/CPU, so clamp
+    // the configured fps to the detected monitor refresh rate when we know it.
+    let refresh_cap = overlay.refresh_hz();
+
     loop {
         let frame_start = Instant::now();
 
@@ -57,7 +61,10 @@ pub fn run_overlay(
             break;
         }
 
-        let fps = renderer.config.fps.max(1) as f32;
+        let mut fps = renderer.config.fps.max(1) as f32;
+        if let Some(cap) = refresh_cap {
+            fps = fps.min(cap);
+        }
         let frame_time = Duration::from_secs_f32(1.0 / fps);
         let elapsed = frame_start.elapsed();
         if let Some(remaining) = frame_time.checked_sub(elapsed) {
