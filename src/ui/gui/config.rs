@@ -56,10 +56,14 @@ impl App {
             }
 
             if ui.button("Config Folder").clicked() {
-                std::process::Command::new("xdg-open")
+                // Best-effort: if no xdg-open handler is configured (e.g. no
+                // browser/file-manager registered), don't crash the GUI.
+                if let Err(err) = std::process::Command::new("xdg-open")
                     .arg(BASE_PATH.as_os_str())
                     .status()
-                    .unwrap();
+                {
+                    utils::error!("failed to open config folder: {err}");
+                }
             }
         });
 

@@ -75,7 +75,7 @@ impl App {
                 ui.with_layout(egui::Layout::bottom_up(Align::Min), |ui| {
                     if ui.button("Report Issue").clicked() {
                         let _ = std::process::Command::new("xdg-open")
-                            .arg("https://github.com/avitran0/deadlocked/issues")
+                            .arg("https://github.com/everyoneexe/wlrip/issues")
                             .status();
                     }
 
