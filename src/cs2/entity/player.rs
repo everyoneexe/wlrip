@@ -624,7 +624,12 @@ impl Player {
         let current: u32 = cs2
             .process
             .read(camera_service + cs2.offsets.camera_services.fov);
-        if current != 0 && current != value {
+        // Only skip the write when the FOV already matches. The previous code
+        // also skipped when `current == 0`, but the camera FOV reads back as 0
+        // for a frame or two around spawn / team change, and skipping there let
+        // the game snap the FOV back to default until it stabilized — which
+        // showed up as the FOV changer "breaking" for a few seconds.
+        if current != value {
             cs2.process
                 .write(self.controller + cs2.offsets.controller.desired_fov, value);
         }
