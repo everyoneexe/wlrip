@@ -7,6 +7,7 @@ use crate::ui::color::Colors;
 #[serde(default)]
 pub struct HudConfig {
     pub bomb_timer: bool,
+    pub bomb_esp: bool,
     pub fov_circle: bool,
     pub sniper_crosshair: CrosshairConfig,
     pub dropped_weapons: bool,
@@ -25,6 +26,7 @@ impl Default for HudConfig {
     fn default() -> Self {
         Self {
             bomb_timer: true,
+            bomb_esp: true,
             fov_circle: false,
             sniper_crosshair: CrosshairConfig::default(),
             dropped_weapons: true,

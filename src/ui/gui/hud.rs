@@ -95,6 +95,10 @@ impl App {
                 self.send_config();
             }
 
+            if checkbox(ui, "Bomb ESP", &mut self.config.hud.bomb_esp) {
+                self.send_config();
+            }
+
             if checkbox(ui, "FOV Circle", &mut self.config.hud.fov_circle) {
                 self.send_config();
             }

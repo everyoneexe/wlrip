@@ -19,7 +19,64 @@ impl OverlayRenderer {
         }
     }
 
+    pub fn draw_bomb_esp(&self, painter: &Painter, data: &Data) {
+        if !self.config.hud.bomb_esp || !data.bomb.planted {
+            return;
+        }
+
+        let Some(pos) = world_to_screen(&data.bomb.position, data) else {
+            return;
+        };
+
+        let distance = data.local_player.position.distance(data.bomb.position);
+
+        // Color by remaining time: green when there is plenty, red as it runs out.
+        let fraction = (data.bomb.timer / 40.0).clamp(0.0, 1.0);
+        let color = self.health_color((fraction * 100.0) as i32, 255);
+
+        // C4 icon at the world position, using the equipment icon font.
+        let icon_font = egui::FontId::monospace(self.config.hud.icon_size);
+        painter.text(
+            pos,
+            Align2::CENTER_CENTER,
+            crate::cs2::entity::weapon::Weapon::C4.to_icon(),
+            icon_font,
+            color,
+        );
+
+        // Distance below the icon so it stays readable from across the map.
+        self.text(
+            painter,
+            format!("C4 [{:.0}m]", distance / 100.0),
+            pos2(pos.x, pos.y + self.config.hud.icon_size),
+            Align2::CENTER_TOP,
+            Some(color),
+        );
+
+        // Defuse state: show who is winning the race.
+        if data.bomb.being_defused {
+            let defused_in_time = data.bomb.defuse_remain_time <= data.bomb.timer;
+            let (label, label_color) = if defused_in_time {
+                ("DEFUSING (in time)", Color32::GREEN)
+            } else {
+                ("DEFUSING (too late)", Color32::RED)
+            };
+            self.text(
+                painter,
+                label,
+                pos2(
+                    pos.x,
+                    pos.y + self.config.hud.icon_size + self.config.hud.font_size,
+                ),
+                Align2::CENTER_TOP,
+                Some(label_color),
+            );
+        }
+    }
+
     pub fn draw_bomb_timer(&self, painter: &Painter, data: &Data) {
+        self.draw_bomb_esp(painter, data);
+
         if !self.config.hud.bomb_timer || !data.bomb.planted {
             return;
         }
