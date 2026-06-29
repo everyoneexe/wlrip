@@ -78,36 +78,64 @@ impl CS2 {
 
         let target_friendlies = aimbot_config.target_friendlies;
 
-        for player in &self.players {
-            if !(ffa || target_friendlies) && team == player.team(self) {
-                continue;
-            }
-
-            let velocity = player.velocity(self);
-            let prediction_time = 0.05; // 50ms lookahead
-            let head_position = player.bone_position(self, Bones::Head.u64()) + velocity * prediction_time;
+        // Target stickiness: while actively aiming, keep locked onto the current
+        // target as long as it stays valid and inside the FOV cone, instead of
+        // re-picking the global best every tick. With a small FOV there is
+        // usually only one enemy in the cone so this is a no-op, but with a large
+        // FOV several enemies fall inside it and re-picking each tick makes the
+        // aim flick back and forth between them, which manifests as a spinbot.
+        let mut keep_current = false;
+        if self.aim.active
+            && let Some(current) = self.target.player
+        {
+            let velocity = current.velocity(self);
+            let prediction_time = 0.05;
+            let head_position =
+                current.bone_position(self, Bones::Head.u64()) + velocity * prediction_time;
             let distance = eye_position.distance(head_position);
             let angle = self.angle_to_target(&local_player, &head_position, &aim_punch);
             let fov = angles_to_fov(&view_angles, &angle);
 
-            let fov_limit = max_fov * self.distance_scale(distance);
-            if fov > fov_limit {
-                continue;
-            }
-
-            let should_select = match targeting_mode {
-                TargetingMode::Fov => fov < best_fov,
-                TargetingMode::Distance => distance < best_distance,
-            };
-
-            if should_select {
-                best_fov = fov;
-                best_distance = distance;
-
-                self.target.player = Some(*player);
+            if fov <= max_fov * self.distance_scale(distance) {
+                keep_current = true;
                 self.target.angle = angle;
                 self.target.distance = distance;
                 self.target.bone_index = Bones::Head.u64();
+            }
+        }
+
+        if !keep_current {
+            for player in &self.players {
+                if !(ffa || target_friendlies) && team == player.team(self) {
+                    continue;
+                }
+
+                let velocity = player.velocity(self);
+                let prediction_time = 0.05; // 50ms lookahead
+                let head_position = player.bone_position(self, Bones::Head.u64()) + velocity * prediction_time;
+                let distance = eye_position.distance(head_position);
+                let angle = self.angle_to_target(&local_player, &head_position, &aim_punch);
+                let fov = angles_to_fov(&view_angles, &angle);
+
+                let fov_limit = max_fov * self.distance_scale(distance);
+                if fov > fov_limit {
+                    continue;
+                }
+
+                let should_select = match targeting_mode {
+                    TargetingMode::Fov => fov < best_fov,
+                    TargetingMode::Distance => distance < best_distance,
+                };
+
+                if should_select {
+                    best_fov = fov;
+                    best_distance = distance;
+
+                    self.target.player = Some(*player);
+                    self.target.angle = angle;
+                    self.target.distance = distance;
+                    self.target.bone_index = Bones::Head.u64();
+                }
             }
         }
 
