@@ -3,12 +3,15 @@
 simple cs2 aimbot and esp, for linux only. native wayland.
 
 > [!NOTE]
-> This is a fork of [avitran0/deadlocked](https://github.com/avitran0/deadlocked)
-> (which itself tracks the `rdbtCVS` upstream). The original targets X11 and
-> only runs on Wayland through XWayland. **wlrip makes the overlay and GUI
-> run as pure native Wayland clients** — no X11, no XWayland — and adds an
-> autowall/penetration system, multipoint head aiming, and a much tighter
-> ESP latency path.
+> wlrip is based on [avitran0/deadlocked](https://github.com/avitran0/deadlocked)
+> by avitran0 (which itself tracks the `rdbtCVS` upstream). All credit for the
+> core implementation goes to the upstream authors; wlrip is licensed under
+> GPL-3.0, the same as the original.
+>
+> The original targets X11 and only runs on Wayland through XWayland. **wlrip
+> reworks the overlay and GUI to run as pure native Wayland clients** — no X11,
+> no XWayland — and adds an autowall/penetration system, multipoint head aiming,
+> and a much tighter ESP latency path.
 >
 > See [Differences from upstream](#differences-from-upstream) for the full list.
 
@@ -28,7 +31,7 @@ Compared to [avitran0/deadlocked](https://github.com/avitran0/deadlocked):
 
 ### Native Wayland
 
-This fork replaces the X11-based rendering with native Wayland:
+wlrip replaces the X11-based rendering with native Wayland:
 
 - **Overlay (ESP):** drawn through `wlr-layer-shell` on the overlay layer, with
   a click-through input region. Renders via EGL + glow + egui.
@@ -97,8 +100,8 @@ compositors: Hyprland, Sway, niri, river, Wayfire, KDE KWin, and others.
 
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-git clone https://github.com/avitran0/deadlocked
-cd deadlocked
+git clone https://github.com/everyoneexe/wlrip
+cd wlrip
 ./setup.sh
 # Restart your machine (required)
 ```
@@ -196,7 +199,7 @@ Any Wayland compositor that implements **`wlr-layer-shell`**:
 **Not supported:**
 
 - GNOME (Mutter) — no `wlr-layer-shell`, so no overlay. The GUI still opens.
-- Pure X11 sessions — this fork is Wayland-only. Use the
+- Pure X11 sessions — wlrip is Wayland-only. Use the
   [upstream](https://github.com/avitran0/deadlocked) for X11.
 
 ### The overlay doesn't show up
@@ -220,3 +223,41 @@ Your compositor doesn't have transparency enabled. On KDE, go into
 ### Where are my configs saved?
 
 Configs are saved in `$XDG_CONFIG_HOME` with fallback to `$HOME/.config`. Otherwise they're saved alongside the executable.
+
+### Will I get banned?
+
+No one can promise you won't. This is a cheat for a VAC-protected game, so there
+is always risk. wlrip is **external** (it reads game memory from another process
+and moves the mouse through `uinput`) — it does not inject into the game or hook
+its rendering, which keeps the client-side detection surface low. But most bans
+are *behavioral*: VACnet and Overwatch look at how you play, not just your
+memory. Inhuman flick speed, pre-aiming through walls, and obvious ESP plays get
+you reported and reviewed regardless of how the tool is built. VAC also bans in
+retroactive waves, so being undetected today is not a guarantee. Keep aim smooth,
+keep your FOV small, don't be obvious, and don't use it on an account you can't
+afford to lose.
+
+### The ESP still lags behind during fast turns
+
+A small amount of lag is unavoidable for an external overlay (see
+[Low-latency ESP](#low-latency-esp) — the compositor adds one frame of its own).
+The biggest lever you control is the overlay's render rate: raise `fps` in your
+config (default 240) toward or above your monitor's refresh rate. vsync is
+already off, so a higher `fps` directly tightens how fresh the drawn snapshot is.
+
+### The aimbot shoots the wall when an enemy is behind cover
+
+Two settings help, depending on what you want:
+
+- **Multipoint** (`multipoint = true`) makes the aimbot target the *visible*
+  part of a head peeking around a corner instead of the (occluded) head center.
+  Tune `multipoint_radius` (world units, ~3.0) if it over/under-shoots the edge.
+- **Autowall** (`autowall = true`) lets the aimbot target an enemy through
+  penetrable cover, using a thickness-based penetration estimate for the held
+  weapon. It won't target through cover the weapon can't actually shoot through.
+
+## License
+
+GPL-3.0, inherited from [avitran0/deadlocked](https://github.com/avitran0/deadlocked).
+See [license](license). If you distribute wlrip or a build of it, you must keep
+it under GPL-3.0 and make the source available.
