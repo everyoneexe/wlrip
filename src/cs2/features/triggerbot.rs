@@ -18,6 +18,8 @@ use crate::{
 pub struct Triggerbot {
     shot_start: Option<Instant>,
     shot_end: Option<Instant>,
+    cooldown_until: Option<Instant>,
+    pending_cooldown: Option<Duration>,
     pub active: bool,
 }
 
@@ -36,6 +38,15 @@ impl CS2 {
 
         if self.trigger.shot_start.is_some() || self.trigger.shot_end.is_some() {
             return;
+        }
+
+        // Refire cooldown: wait a randomized interval after the previous shot
+        // instead of firing again the instant the hold duration elapses.
+        if let Some(cooldown_until) = self.trigger.cooldown_until {
+            if Instant::now() < cooldown_until {
+                return;
+            }
+            self.trigger.cooldown_until = None;
         }
 
         let Some(local_player) = Player::local_player(self) else {
@@ -92,6 +103,22 @@ impl CS2 {
         let delay = Duration::from_millis(delay);
         self.trigger.shot_start = Some(now + delay);
         self.trigger.shot_end = Some(now + delay + Duration::from_millis(config.shot_duration));
+
+        // Sample the post-shot cooldown now (config is in scope); it is applied
+        // once the shot is released in triggerbot_shoot.
+        let cd_mean =
+            (*config.after_shot_delay.start() + *config.after_shot_delay.end()) as f32 / 2.0;
+        let cd_std_dev =
+            (*config.after_shot_delay.end() - *config.after_shot_delay.start()) as f32 / 2.0;
+        let cooldown = if cd_std_dev > 0.0 {
+            rand_distr::Normal::new(cd_mean, cd_std_dev)
+                .unwrap()
+                .sample(&mut rng())
+                .max(0.0) as u64
+        } else {
+            cd_mean as u64
+        };
+        self.trigger.pending_cooldown = Some(Duration::from_millis(cooldown));
     }
 
     pub fn triggerbot_shoot(&mut self, mouse: &mut Mouse) {
@@ -109,6 +136,11 @@ impl CS2 {
         {
             mouse.left_release();
             self.trigger.shot_end = None;
+
+            // Start the refire cooldown from the moment the shot is released.
+            if let Some(cooldown) = self.trigger.pending_cooldown.take() {
+                self.trigger.cooldown_until = Some(now + cooldown);
+            }
         }
     }
 }

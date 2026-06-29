@@ -272,6 +272,17 @@ impl App {
                 self.send_config();
             }
 
+            if ui
+                .add(DragRange::new(
+                    "Refire Delay (ms)",
+                    &mut self.weapon_config().triggerbot.after_shot_delay,
+                    0..=2000,
+                ))
+                .changed()
+            {
+                self.send_config();
+            }
+
             if combo_box(
                 ui,
                 "triggerbot_mode",
