@@ -103,6 +103,7 @@ impl OverlayRenderer {
         self.draw_sniper_crosshair(&painter, data);
         self.draw_keybind_list(&painter, data);
         self.draw_spectator_list(&painter, data);
+        self.draw_shot_log(&painter, data);
 
         if data.aimbot_active {
             self.text(

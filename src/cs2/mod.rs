@@ -62,6 +62,7 @@ pub struct CS2 {
     last_cache: Instant,
     /// When true, the overlay is hidden entirely (panic / stream-proof).
     streamproof: bool,
+    shot_log: features::shot_log::ShotLog,
 }
 
 impl CS2 {
@@ -121,6 +122,8 @@ impl CS2 {
         self.fov_changer(config);
 
         self.esp_toggle(config);
+
+        self.shot_log(config);
 
         // Stream-proof / panic: a single toggle hides the whole overlay so it
         // does not show up when sharing the full screen.
@@ -281,6 +284,7 @@ impl CS2 {
         };
         data.esp_active = self.esp_enabled(config);
         data.overlay_hidden = self.streamproof;
+        data.shot_log = self.shot_log_data();
 
         data.view_matrix = self.process.read::<Mat4>(self.offsets.direct.view_matrix);
         data.view_angles = local_player.view_angles(self);
@@ -321,6 +325,7 @@ impl CS2 {
             planted_c4: None,
             last_cache: Instant::now(),
             streamproof: false,
+            shot_log: features::shot_log::ShotLog::default(),
         }
     }
 

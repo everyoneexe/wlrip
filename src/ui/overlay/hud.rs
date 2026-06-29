@@ -167,6 +167,77 @@ impl OverlayRenderer {
         );
     }
 
+    pub fn draw_shot_log(&self, painter: &Painter, data: &Data) {
+        if !self.config.hud.shot_log {
+            return;
+        }
+
+        let log = &data.shot_log;
+        if log.total == 0 {
+            return;
+        }
+
+        let hs_ratio = log.headshots as f32 / log.total as f32;
+
+        // Classify how suspicious the headshot ratio looks; low ratio = legit.
+        let (risk_label, risk_color) = if hs_ratio >= 0.8 {
+            ("RISK: HIGH", Color32::RED)
+        } else if hs_ratio >= 0.5 {
+            ("RISK: MEDIUM", Color32::from_rgb(255, 165, 0))
+        } else {
+            ("RISK: LOW", Color32::GREEN)
+        };
+
+        let line = self.config.hud.font_size;
+        let right = data.window_size.x - 10.0;
+        let mut y = data.window_size.y / 4.0;
+
+        self.text(
+            painter,
+            format!(
+                "Shots: {}  HS: {} ({:.0}%)",
+                log.total,
+                log.headshots,
+                hs_ratio * 100.0
+            ),
+            pos2(right, y),
+            Align2::RIGHT_TOP,
+            Some(Color32::WHITE),
+        );
+        y += line;
+
+        self.text(
+            painter,
+            risk_label,
+            pos2(right, y),
+            Align2::RIGHT_TOP,
+            Some(risk_color),
+        );
+        y += line * 1.5;
+
+        // Recent shots, newest at the top.
+        for entry in log.entries.iter().rev() {
+            let color = if entry.headshot {
+                Color32::RED
+            } else {
+                Color32::WHITE
+            };
+            self.text(
+                painter,
+                format!(
+                    "{:?}  {:.0}m{}",
+                    entry.bone,
+                    entry.distance / 100.0,
+                    if entry.headshot { "  HS" } else { "" }
+                ),
+                pos2(right, y),
+                Align2::RIGHT_TOP,
+                Some(color),
+            );
+            y += line;
+        }
+    }
+
     pub fn draw_spectator_list(&self, painter: &Painter, data: &Data) {
         if !self.config.hud.spectator_list {
             return;

@@ -114,6 +114,10 @@ impl App {
             if checkbox(ui, "Spectator List", &mut self.config.hud.spectator_list) {
                 self.send_config();
             }
+
+            if checkbox(ui, "Shot Log", &mut self.config.hud.shot_log) {
+                self.send_config();
+            }
         });
 
         ui.collapsing("Sniper Crosshair", |ui| {

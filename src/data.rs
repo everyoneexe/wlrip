@@ -36,6 +36,23 @@ pub struct Data {
     pub esp_active: bool,
     /// Stream-proof / panic: when true the overlay renders nothing.
     pub overlay_hidden: bool,
+    pub shot_log: ShotLogData,
+}
+
+/// Aggregated shot statistics surfaced to the overlay HUD.
+#[derive(Debug, Clone, Default, Serialize)]
+pub struct ShotLogData {
+    /// Most recent shots, newest last.
+    pub entries: Vec<ShotEntry>,
+    pub total: u32,
+    pub headshots: u32,
+}
+
+#[derive(Debug, Clone, Copy, Serialize)]
+pub struct ShotEntry {
+    pub headshot: bool,
+    pub bone: Bones,
+    pub distance: f32,
 }
 
 #[derive(Debug, Clone, Default, Serialize)]
