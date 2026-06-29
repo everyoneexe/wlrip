@@ -49,9 +49,13 @@ pub fn run_overlay(
             renderer.apply(message);
         }
 
-        overlay.begin_frame();
+        if !overlay.begin_frame() {
+            break;
+        }
         overlay.render(|ui| renderer.overlay(ui));
-        overlay.end_frame();
+        if !overlay.end_frame() {
+            break;
+        }
 
         let fps = renderer.config.fps.max(1) as f32;
         let frame_time = Duration::from_secs_f32(1.0 / fps);

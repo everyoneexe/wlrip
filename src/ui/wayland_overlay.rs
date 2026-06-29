@@ -215,8 +215,14 @@ impl WaylandOverlay {
         })
     }
 
-    pub fn begin_frame(&mut self) {
-        let _ = self.event_queue.dispatch_pending(&mut self.state);
+    pub fn begin_frame(&mut self) -> bool {
+        // If the compositor disconnected (e.g. on shutdown), dispatching the
+        // queue errors out. Bail so the loop can stop instead of spinning on a
+        // dead connection.
+        if self.event_queue.dispatch_pending(&mut self.state).is_err() {
+            utils::error!("wayland dispatch failed, stopping overlay");
+            return false;
+        }
 
         let scale = self.state.scale.max(1);
         let phys_width = self.state.width * scale as u32;
@@ -232,18 +238,27 @@ impl WaylandOverlay {
             self._wl_egl_window.resize(self.width as i32, self.height as i32, 0, 0);
         }
 
-        self.egl.make_current(
-            self.egl_display,
-            Some(self.egl_surface),
-            Some(self.egl_surface),
-            Some(self.egl_context),
-        ).unwrap();
+        if self
+            .egl
+            .make_current(
+                self.egl_display,
+                Some(self.egl_surface),
+                Some(self.egl_surface),
+                Some(self.egl_context),
+            )
+            .is_err()
+        {
+            utils::error!("egl make_current failed, stopping overlay");
+            return false;
+        }
 
         unsafe {
             self.glow.viewport(0, 0, self.width as i32, self.height as i32);
             self.glow.clear_color(0.0, 0.0, 0.0, 0.0);
             self.glow.clear(glow::COLOR_BUFFER_BIT);
         }
+
+        true
     }
 
     pub fn render(&mut self, run_ui: impl FnMut(&mut egui::Ui)) {
@@ -276,8 +291,17 @@ impl WaylandOverlay {
         }
     }
 
-    pub fn end_frame(&self) {
-        self.egl.swap_buffers(self.egl_display, self.egl_surface).unwrap();
+    pub fn end_frame(&self) -> bool {
+        // A failed swap usually means the wayland display / EGL surface went
+        // away (e.g. the compositor tore down our layer surface). Report it so
+        // the render loop can exit cleanly instead of panicking the thread.
+        match self.egl.swap_buffers(self.egl_display, self.egl_surface) {
+            Ok(()) => true,
+            Err(err) => {
+                utils::error!("egl swap_buffers failed, stopping overlay: {err:?}");
+                false
+            }
+        }
     }
 }
 
