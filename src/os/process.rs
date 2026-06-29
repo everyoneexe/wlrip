@@ -95,6 +95,7 @@ impl Process {
         t
     }
 
+    #[allow(dead_code)]
     pub fn read_or_zeroed<T: Pod>(&self, address: u64) -> T {
         let mut t = T::zeroed();
         let buffer = bytemuck::bytes_of_mut(&mut t);

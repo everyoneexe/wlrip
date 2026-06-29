@@ -307,12 +307,19 @@ impl Player {
             return bones;
         }
 
-        let bones_data: [u8; 32 * 32] = cs2.process.read_or_zeroed(bone_data);
-
+        // Read each bone individually instead of one large block: a single
+        // 1024-byte read that crosses an unmapped page fails wholesale and
+        // zeroes every bone, which makes the skeleton vanish even though the
+        // box (which reads the head bone separately) stays. Per-bone reads keep
+        // the rest of the skeleton when one bone is unreadable.
         for bone in Bones::iter() {
-            let start = bone.u64() as usize * 32;
-            let pos = bytemuck::from_bytes(&bones_data[start..start + 3 * 4]);
-            bones.insert(bone, *pos);
+            let pos: Vec3 = cs2.process.read(bone_data + (bone.u64() * 32));
+            // A valid bone is never exactly at the world origin; skip zeroed
+            // reads so we don't draw bones collapsing toward (0, 0, 0).
+            if pos == Vec3::ZERO {
+                continue;
+            }
+            bones.insert(bone, pos);
         }
 
         bones
