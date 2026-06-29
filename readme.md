@@ -4,9 +4,8 @@ simple cs2 aimbot and esp, for linux only. native wayland.
 
 > [!NOTE]
 > wlrip is based on [avitran0/deadlocked](https://github.com/avitran0/deadlocked)
-> by avitran0 (which itself tracks the `rdbtCVS` upstream). All credit for the
-> core implementation goes to the upstream authors; wlrip is licensed under
-> GPL-3.0, the same as the original.
+> by avitran0. All credit for the core implementation goes to avitran0; wlrip
+> is licensed under GPL-3.0, the same as the original.
 >
 > The original targets X11 and only runs on Wayland through XWayland. **wlrip
 > reworks the overlay and GUI to run as pure native Wayland clients** — no X11,
