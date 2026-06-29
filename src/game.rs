@@ -20,11 +20,8 @@ pub struct GameManager {
     config: Config,
     mouse: Option<Mouse>,
     cs2: CS2,
-    // TEMP: lag instrumentation
-    timing_samples: u32,
-    timing_data_accum: Duration,
-    timing_lock_accum: Duration,
-    timing_last: Instant,
+    #[cfg(feature = "lagdbg")]
+    timing: crate::lagdbg::Timing,
 }
 
 impl GameManager {
@@ -45,10 +42,8 @@ impl GameManager {
             config: Config::default(),
             mouse,
             cs2: CS2::new(),
-            timing_samples: 0,
-            timing_data_accum: Duration::ZERO,
-            timing_lock_accum: Duration::ZERO,
-            timing_last: Instant::now(),
+            #[cfg(feature = "lagdbg")]
+            timing: crate::lagdbg::Timing::new(),
         }
     }
 
@@ -83,30 +78,25 @@ impl GameManager {
                     previous_status = GameStatus::Working;
                 }
                 self.cs2.run(&self.config, self.mouse.as_mut());
-                // TEMP: measure how long the data() call holds the mutex
-                let data_start = Instant::now();
-                let mut data = self.data.lock();
-                let lock_acquired = data_start.elapsed();
-                self.cs2.data(&self.config, &mut data);
-                drop(data);
-                let data_elapsed = data_start.elapsed();
-                // TEMP: periodic timing dump (~1/sec)
-                self.timing_samples += 1;
-                self.timing_data_accum += data_elapsed;
-                self.timing_lock_accum += lock_acquired;
-                if self.timing_last.elapsed() >= Duration::from_secs(1) {
-                    let n = self.timing_samples.max(1);
-                    utils::info!(
-                        "[lagdbg] samples/s={} avg_data()={:.2}ms avg_lock_wait={:.3}ms players={}",
-                        self.timing_samples,
-                        self.timing_data_accum.as_secs_f32() * 1000.0 / n as f32,
-                        self.timing_lock_accum.as_secs_f32() * 1000.0 / n as f32,
-                        self.cs2.player_count(),
-                    );
-                    self.timing_samples = 0;
-                    self.timing_data_accum = Duration::ZERO;
-                    self.timing_lock_accum = Duration::ZERO;
-                    self.timing_last = Instant::now();
+
+                #[cfg(not(feature = "lagdbg"))]
+                {
+                    let mut data = self.data.lock();
+                    self.cs2.data(&self.config, &mut data);
+                }
+
+                #[cfg(feature = "lagdbg")]
+                {
+                    // measure how long the data() call holds the mutex
+                    let data_start = Instant::now();
+                    let mut data = self.data.lock();
+                    let lock_acquired = data_start.elapsed();
+                    self.cs2.data(&self.config, &mut data);
+                    drop(data);
+                    let data_elapsed = data_start.elapsed();
+                    if let Some(line) = self.timing.sample(lock_acquired, data_elapsed) {
+                        utils::info!("{line} players={}", self.cs2.player_count());
+                    }
                 }
             } else {
                 *self.data.lock() = Data::default();

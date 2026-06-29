@@ -43,3 +43,6 @@ lto = true
 
 [features]
 read-only = []
+# Periodic [lagdbg] timing dump of the data()/lock hot path. Off by default;
+# build with `--features lagdbg` to enable. Compiled out entirely otherwise.
+lagdbg = []

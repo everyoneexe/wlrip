@@ -14,6 +14,8 @@ mod constants;
 mod cs2;
 mod data;
 mod game;
+#[cfg(feature = "lagdbg")]
+mod lagdbg;
 mod math;
 mod message;
 mod os;
