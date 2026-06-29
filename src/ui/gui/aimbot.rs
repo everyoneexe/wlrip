@@ -131,6 +131,18 @@ impl App {
 
             if drag(
                 ui,
+                "Jitter",
+                DragValue::new(&mut self.weapon_config().aimbot.jitter)
+                    .range(0.0..=10.0)
+                    .suffix("°")
+                    .speed(0.01)
+                    .max_decimals(2),
+            ) {
+                self.send_config();
+            }
+
+            if drag(
+                ui,
                 "Start Bullet",
                 DragValue::new(&mut self.weapon_config().aimbot.start_bullet)
                     .range(0..=10)
@@ -176,6 +188,30 @@ impl App {
         });
 
         ui.collapsing("Bones", |ui| {
+            if checkbox_hover(
+                ui,
+                "Multipoint",
+                "Aim at the visible part of a head peeking around cover instead of the (possibly occluded) center",
+                &mut self.weapon_config().aimbot.multipoint,
+            ) {
+                self.send_config();
+            }
+
+            if self.weapon_config().aimbot.multipoint
+                && drag(
+                    ui,
+                    "Multipoint Radius",
+                    DragValue::new(&mut self.weapon_config().aimbot.multipoint_radius)
+                        .range(0.5..=10.0)
+                        .speed(0.05)
+                        .max_decimals(1),
+                )
+            {
+                self.send_config();
+            }
+
+            ui.separator();
+
             for bone in Bones::iter() {
                 let text = format!("{:?}", bone);
                 let index = self

@@ -52,6 +52,9 @@ pub struct AimbotConfig {
     /// Offset distance of the multipoint samples from the head center, in world
     /// units. Roughly the head radius (~3.0).
     pub multipoint_radius: f32,
+    /// Random yaw/pitch deviation (degrees) added to each aim correction so the
+    /// aim doesn't lock to the exact same point every tick. 0.0 = disabled.
+    pub jitter: f32,
 }
 
 impl Default for AimbotConfig {
@@ -81,6 +84,7 @@ impl Default for AimbotConfig {
             targeting_mode: TargetingMode::Fov,
             multipoint: true,
             multipoint_radius: 3.0,
+            jitter: 0.0,
         }
     }
 }

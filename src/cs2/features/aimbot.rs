@@ -1,4 +1,5 @@
 use glam::{Vec2, Vec3, vec2};
+use rand::{RngExt, rng};
 
 use crate::{
     config::Config,
@@ -124,6 +125,20 @@ impl CS2 {
         {
             return false;
         }
+
+        // Add a small random deviation to the aim point so it doesn't lock to
+        // the exact same coordinate every tick. Applied after the FOV check so
+        // target selection stays clean. 0.0 = disabled.
+        let target_angle = if config.jitter > 0.0 {
+            let j = config.jitter;
+            target_angle
+                + glam::vec2(
+                    rng().random_range(-j..=j),
+                    rng().random_range(-j..=j),
+                )
+        } else {
+            target_angle
+        };
 
         let mut aim_angles = view_angles - target_angle;
         if aim_angles.y < -180.0 {
