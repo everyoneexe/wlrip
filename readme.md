@@ -109,6 +109,44 @@ Also make sure that the `uinput` kernel module is loaded.
 
 Running NixOS or Fedora Atomic? See [OS-Specific Setup](os-setup.md).
 
+### Mouse calibration (important on some compositors)
+
+The aimbot/RCS feed mouse movement through a virtual `uinput` device and assume
+it reaches the game **1:1**. On Wayland, relative mouse input always passes
+through libinput, so any **global pointer sensitivity or acceleration** your
+compositor applies also scales the cheat's virtual device — the aimbot doesn't
+know about that extra scaling, so its corrections over/undershoot and the aim
+ends up jittering or spinning.
+
+If your aim throws around or spins, give the virtual device a flat, 1:1 profile
+so global pointer settings don't touch it. The device is named
+**`TI-84 Plus Silver Calculator`** (yes, really).
+
+**Hyprland** — confirm the exact (normalized) name, then add a per-device
+override that leaves your global settings alone:
+
+```bash
+hyprctl devices | grep -i calc   # confirm the name
+```
+
+```ini
+device {
+    name = ti-84-plus-silver-calculator
+    sensitivity = 0
+    accel_profile = flat
+}
+```
+
+Then `hyprctl reload`. This matters if you set a global `sensitivity` (e.g.
+`sensitivity = -0.8`) or a non-flat `accel_profile` in `input { ... }` — those
+otherwise scale the aimbot's movement and make it unstable.
+
+> [!NOTE]
+> **niri** and most compositors that don't apply a global pointer transform need
+> no setup — input reaches the game 1:1 there, so the aimbot is stable out of the
+> box. This is only needed where a global sensitivity/accel is configured (most
+> commonly Hyprland).
+
 ## Running
 
 ```bash
@@ -259,6 +297,19 @@ Two settings help, depending on what you want:
 - **Autowall** (`autowall = true`) lets the aimbot target an enemy through
   penetrable cover, using a thickness-based penetration estimate for the held
   weapon. It won't target through cover the weapon can't actually shoot through.
+
+### The aim throws around / spins / overshoots
+
+Almost always your compositor is applying a global pointer sensitivity or
+acceleration to the cheat's virtual mouse device, which breaks the aimbot's 1:1
+calibration. This is the usual cause when the aim is stable on one compositor
+(e.g. niri) but spins on another (e.g. Hyprland with a global `sensitivity`).
+See [Mouse calibration](#mouse-calibration-important-on-some-compositors) — give
+the `TI-84 Plus Silver Calculator` device a flat, `sensitivity = 0` profile.
+
+If it still happens after that, lower `smooth` slightly, or turn `multipoint`
+off to confirm it isn't the multipoint sampler picking a different point each
+tick.
 
 ## License
 
